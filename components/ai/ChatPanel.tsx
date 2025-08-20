@@ -15,8 +15,8 @@ const Message: React.FC<{ message: ChatMessage }> = ({ message }) => {
                     <Bot size={20} />
                 </div>
             )}
-            <div className={`max-w-lg p-3 rounded-lg ${isUser ? 'bg-primary text-primary-foreground' : 'bg-neutral-100 text-neutral-800'}`}>
-                <div className="prose prose-sm max-w-none text-white">
+            <div className={`max-w-lg p-3 rounded-lg ${isUser ? 'bg-primary text-primary-foreground' : 'bg-neutral-100'}`}>
+                <div className="prose prose-sm max-w-none dark:prose-invert">
                     <ReactMarkdown>{typeof message.text === 'string' ? message.text : ''}</ReactMarkdown>
                 </div>
             </div>
