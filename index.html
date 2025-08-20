@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GestorCoop - AI Cooperative Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                DEFAULT: '#3B82F6', // Blue
+                dark: '#2563EB',
+              },
+              secondary: {
+                DEFAULT: '#10B981', // Green
+                dark: '#059669',
+              },
+              neutral: {
+                '50': '#F9FAFB',
+                '100': '#F3F4F6',
+                '200': '#E5E7EB',
+                '300': '#D1D5DB',
+                '400': '#9CA3AF',
+                '500': '#6B7280',
+                '600': '#4B5563',
+                '700': '#374151',
+                '800': '#1F2937',
+                '900': '#111827',
+              },
+            },
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.1.1/",
+    "react": "https://esm.sh/react@^19.1.1",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.8.1",
+    "lucide-react": "https://esm.sh/lucide-react@^0.540.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.15.0",
+    "recharts": "https://esm.sh/recharts@^3.1.2",
+    "react-markdown": "https://esm.sh/react-markdown@^10.1.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-neutral-100">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
