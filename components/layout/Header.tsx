@@ -8,7 +8,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   return (
-    <header className="bg-white shadow-sm p-4 flex items-center justify-between sticky top-0 z-10">
+    <header className="bg-neutral-100 p-4 flex items-center justify-between sticky top-0 z-10 border-b border-neutral-200">
       <div className="flex items-center">
         <button onClick={toggleSidebar} className="lg:hidden text-neutral-600 mr-4">
           <Menu size={24} />
@@ -18,7 +18,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           <input
             type="text"
             placeholder="Buscar cooperados, oportunidades..."
-            className="bg-neutral-100 rounded-lg pl-10 pr-4 py-2 w-72 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="bg-white rounded-lg pl-10 pr-4 py-2 w-72 focus:outline-none focus:ring-2 focus:ring-primary border border-neutral-200"
           />
         </div>
       </div>

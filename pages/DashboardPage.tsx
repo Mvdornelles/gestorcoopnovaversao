@@ -1,9 +1,11 @@
 
 import React from 'react';
 import Card from '../components/ui/Card';
-import { Users, DollarSign, Activity, AlertTriangle, ArrowUp, ArrowDown } from 'lucide-react';
+import { Users, DollarSign, Activity, AlertTriangle, ArrowUp, ArrowDown, Sparkles, ShieldAlert } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { mockCooperados } from '../data/mockData';
+import Badge from '../components/ui/Badge';
+import { Tier } from '../types';
 
 const KpiCard = ({ title, value, icon, trend, change, colorClass }: { title: string; value: string; icon: React.ReactElement<{ size?: string | number }>; trend: 'up' | 'down'; change: string; colorClass: string; }) => {
     return (
@@ -81,19 +83,19 @@ const DashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
             <h2 className="text-xl font-semibold text-neutral-800 mb-4">Insights da IA</h2>
-            <ul className="space-y-4">
-                <li className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                    <AlertTriangle size={20} className="text-blue-500 mt-1 flex-shrink-0" />
+            <ul className="space-y-3">
+                <li className="flex items-start gap-4 p-4 bg-blue-50/50 rounded-lg border border-blue-100">
+                    <Sparkles size={24} className="text-blue-500 mt-1 flex-shrink-0" />
                     <div>
                         <p className="font-semibold text-blue-800">Oportunidade de Cross-sell</p>
-                        <p className="text-sm text-blue-600">Cooperados do nível Ouro mostraram interesse em 'Previdência Privada'. Considere uma campanha direcionada.</p>
+                        <p className="text-sm text-neutral-600">Cooperados do nível Ouro mostraram interesse em 'Previdência Privada'. Considere uma campanha direcionada.</p>
                     </div>
                 </li>
-                 <li className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg">
-                    <AlertTriangle size={20} className="text-yellow-500 mt-1 flex-shrink-0" />
+                 <li className="flex items-start gap-4 p-4 bg-yellow-50/50 rounded-lg border border-yellow-100">
+                    <ShieldAlert size={24} className="text-yellow-500 mt-1 flex-shrink-0" />
                     <div>
                         <p className="font-semibold text-yellow-800">Risco de Churn Identificado</p>
-                        <p className="text-sm text-yellow-600">Daniel Alves (Bronze) teve baixa interação nos últimos 60 dias. A IA sugere um contato proativo.</p>
+                        <p className="text-sm text-neutral-600">Daniel Alves (Bronze) teve baixa interação nos últimos 60 dias. A IA sugere um contato proativo.</p>
                     </div>
                 </li>
             </ul>
@@ -101,16 +103,19 @@ const DashboardPage: React.FC = () => {
         <Card>
             <h2 className="text-xl font-semibold text-neutral-800 mb-4">Cooperados Recentes</h2>
             <div className="space-y-3">
-                {mockCooperados.slice(0, 3).map(cooperado => (
-                    <div key={cooperado.id} className="flex items-center justify-between p-2 hover:bg-neutral-50 rounded-md">
+                {mockCooperados.slice(0, 4).map(cooperado => (
+                    <div key={cooperado.id} className="flex items-center justify-between p-2 hover:bg-neutral-50 rounded-md transition-colors">
                         <div className="flex items-center gap-3">
                             <img src={cooperado.avatar} alt={cooperado.name} className="h-10 w-10 rounded-full"/>
                             <div>
                                 <p className="font-semibold text-neutral-700">{cooperado.name}</p>
-                                <p className="text-sm text-neutral-500">{cooperado.email}</p>
+                                <p className="text-sm text-neutral-500">{cooperado.company}</p>
                             </div>
                         </div>
-                         <p className="text-sm text-neutral-500">Desde {new Date(cooperado.since).toLocaleDateString('pt-BR')}</p>
+                        <div className="flex items-center gap-4">
+                            <Badge tier={cooperado.tier} />
+                            <p className="text-sm text-neutral-500 w-24 text-right">Desde {new Date(cooperado.since).toLocaleDateString('pt-BR')}</p>
+                        </div>
                     </div>
                 ))}
             </div>

@@ -2,7 +2,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_LINKS } from '../../constants';
-import { X, Bot } from 'lucide-react';
+import { X, Landmark } from 'lucide-react';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -25,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
             <div className="bg-gradient-to-br from-primary to-secondary p-2 rounded-lg">
-                <Bot size={24} />
+                <Landmark size={24} />
             </div>
             <h1 className="text-2xl font-bold text-white">GestorCoop</h1>
           </div>
@@ -55,13 +55,6 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
             ))}
           </ul>
         </nav>
-
-        <div className="mt-auto">
-            <div className="bg-neutral-800 rounded-lg p-4 text-center">
-                <p className="text-sm text-neutral-400">© 2024 GestorCoop</p>
-                <p className="text-xs text-neutral-500 mt-1">Todos os direitos reservados.</p>
-            </div>
-        </div>
       </div>
     </>
   );
