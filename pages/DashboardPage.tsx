@@ -55,24 +55,40 @@ const DashboardPage: React.FC = () => {
         <Card className="lg:col-span-3">
           <h2 className="text-xl font-semibold text-neutral-800 mb-4">Pipeline por Etapa</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={pipelineData}>
+            <BarChart data={pipelineData} animationDuration={800}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" tick={{ fill: '#6B7280', fontSize: 12 }} />
-              <YAxis tick={{ fill: '#6B7280', fontSize: 12 }} tickFormatter={(value) => `R$${Number(value) / 1000}k`} />
-              <Tooltip cursor={{ fill: '#F3F4F6' }} contentStyle={{ backgroundColor: 'white', border: '1px solid #E5E7EB', borderRadius: '0.5rem' }} />
-              <Bar dataKey="value" fill="#3B82F6" name="Valor" radius={[4, 4, 0, 0]} />
+              <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={{ stroke: 'hsl(var(--border))' }} tickLine={false} />
+              <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={{ stroke: 'hsl(var(--border))' }} tickLine={false} tickFormatter={(value) => `R$${Number(value) / 1000}k`} />
+              <Tooltip
+                cursor={{ fill: 'hsl(var(--accent))' }}
+                contentStyle={{
+                    backgroundColor: 'hsl(var(--background))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 'var(--radius)',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                }}
+              />
+              <Bar dataKey="value" fill="hsl(var(--primary))" name="Valor" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
         <Card className="lg:col-span-2">
             <h2 className="text-xl font-semibold text-neutral-800 mb-4">Tendência da Taxa de Churn</h2>
             <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={churnData}>
+                <LineChart data={churnData} animationDuration={800}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="month" tick={{ fill: '#6B7280', fontSize: 12 }} />
-                    <YAxis tick={{ fill: '#6B7280', fontSize: 12 }} domain={[0, 'dataMax + 1']} unit="%" />
-                    <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #E5E7EB', borderRadius: '0.5rem' }} />
-                    <Line type="monotone" dataKey="rate" stroke="#EF4444" strokeWidth={2} dot={{ r: 4, fill: '#EF4444' }} activeDot={{ r: 6 }} name="Taxa de Churn"/>
+                    <XAxis dataKey="month" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={{ stroke: 'hsl(var(--border))' }} tickLine={false} />
+                    <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={{ stroke: 'hsl(var(--border))' }} tickLine={false} domain={[0, 'dataMax + 1']} unit="%" />
+                    <Tooltip
+                      cursor={{ stroke: 'hsl(var(--destructive))', strokeWidth: 1.5 }}
+                      contentStyle={{
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: 'var(--radius)',
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                      }}
+                    />
+                    <Line type="monotone" dataKey="rate" stroke="hsl(var(--destructive))" strokeWidth={2.5} activeDot={{ r: 8 }} name="Taxa de Churn"/>
                 </LineChart>
             </ResponsiveContainer>
         </Card>
@@ -82,14 +98,14 @@ const DashboardPage: React.FC = () => {
         <Card>
             <h2 className="text-xl font-semibold text-neutral-800 mb-4">Insights da IA</h2>
             <ul className="space-y-4">
-                <li className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                <li className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg transition-colors duration-200 hover:bg-blue-100/70">
                     <AlertTriangle size={20} className="text-blue-500 mt-1 flex-shrink-0" />
                     <div>
                         <p className="font-semibold text-blue-800">Oportunidade de Cross-sell</p>
                         <p className="text-sm text-blue-600">Cooperados do nível Ouro mostraram interesse em 'Previdência Privada'. Considere uma campanha direcionada.</p>
                     </div>
                 </li>
-                 <li className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg">
+                 <li className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg transition-colors duration-200 hover:bg-yellow-100/70">
                     <AlertTriangle size={20} className="text-yellow-500 mt-1 flex-shrink-0" />
                     <div>
                         <p className="font-semibold text-yellow-800">Risco de Churn Identificado</p>
@@ -102,7 +118,7 @@ const DashboardPage: React.FC = () => {
             <h2 className="text-xl font-semibold text-neutral-800 mb-4">Cooperados Recentes</h2>
             <div className="space-y-3">
                 {mockCooperados.slice(0, 3).map(cooperado => (
-                    <div key={cooperado.id} className="flex items-center justify-between p-2 hover:bg-neutral-50 rounded-md">
+                    <div key={cooperado.id} className="flex items-center justify-between p-2 hover:bg-neutral-100 rounded-md transition-colors duration-200">
                         <div className="flex items-center gap-3">
                             <img src={cooperado.avatar} alt={cooperado.name} className="h-10 w-10 rounded-full"/>
                             <div>
