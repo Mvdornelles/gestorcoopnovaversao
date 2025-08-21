@@ -153,7 +153,7 @@ const ProdutosPage: React.FC = () => {
                     <h1 className="text-3xl font-bold text-neutral-800">Catálogo de Produtos</h1>
                     <p className="text-neutral-500 mt-1">Gerencie os produtos e serviços oferecidos pela cooperativa.</p>
                 </div>
-                <Button onClick={() => handleOpenModal()} className="mt-4 md:mt-0">
+                <Button onClick={() => handleOpenModal()} className="mt-4 md:mt-0" animated>
                     <Plus size={20} className="mr-2" />
                     Adicionar Novo Produto
                 </Button>
