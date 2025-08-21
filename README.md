@@ -12,9 +12,22 @@ View your app in AI Studio: https://ai.studio/apps/drive/1daQ91rA6zKpPzBBsD4jDeE
 
 **Prerequisites:**  Node.js
 
+1.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+2.  **Set up Environment Variables:**
+    Create a file named `.env.local` in the root of the project and add your Supabase project credentials:
+    ```env
+    VITE_SUPABASE_URL=https://your-project-url.supabase.co
+    VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+    VITE_SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+    ```
+    You can find these keys in your Supabase project's "API Settings".
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+3.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+
+For a complete guide on the architecture and how to deploy the final AI Chat feature, please see `DOCUMENTATION.md`.

@@ -1,6 +1,6 @@
 # Documentação da Aplicação CRM Cooperativa
 
-**Data da Documentação:** 20 de Agosto de 2025
+**Data da Documentação:** 21 de Agosto de 2025
 
 ## 1. Introdução
 
@@ -8,107 +8,79 @@ Bem-vindo à documentação da aplicação de CRM (Customer Relationship Managem
 
 ### Foco Atual do Projeto
 
-**Nota Importante:** No estágio atual, o desenvolvimento está **focado exclusivamente na construção da interface de usuário (UI)**. Todas as telas, componentes e interações estão sendo desenvolvidos com base em dados mockados. Nenhuma integração com backend, APIs ou banco de dados foi implementada até a data desta documentação.
+A aplicação foi integrada com um backend **Supabase**, substituindo os dados mockados por uma conexão real com o banco de dados. As principais funcionalidades, como gestão de cooperados, produtos, tarefas e oportunidades, agora utilizam dados ao vivo.
+
+A autenticação é gerenciada pelo Supabase, com a aplicação operando como um **usuário de teste padrão** (`test@gestorcoop.com`) para fins de desenvolvimento.
 
 ### Tecnologias Utilizadas
 
-A aplicação está sendo construída com um stack de tecnologias moderno, focado em performance e produtividade no desenvolvimento:
-
-- **React:** Biblioteca para construção de interfaces de usuário.
-- **TypeScript:** Superset do JavaScript que adiciona tipagem estática.
-- **Vite:** Ferramenta de build para desenvolvimento frontend.
-- **Tailwind CSS:** Framework CSS utility-first para estilização.
-- **React Router:** Para gerenciamento de rotas na aplicação.
+- **React, TypeScript, Vite, Tailwind CSS**
+- **Supabase:** Backend como serviço para banco de dados, autenticação e Edge Functions.
+- **@supabase/supabase-js:** Biblioteca cliente para interagir com o Supabase.
 - **Recharts:** Para a criação de gráficos e visualização de dados.
 - **Lucide React:** Para iconografia.
 
-## 2. Estrutura do Projeto
+## 2. Configuração do Ambiente
 
-O projeto está organizado na seguinte estrutura de pastas, visando a modularidade e a clareza:
+Para rodar o projeto localmente, siga os passos no `README.md`. A principal configuração é a criação de um arquivo `.env.local` na raiz do projeto com as credenciais do seu projeto Supabase.
 
+## 3. Arquitetura do Backend (Supabase)
+
+O backend é construído inteiramente na plataforma Supabase.
+
+### 3.1. Banco de Dados
+
+O schema do banco de dados PostgreSQL foi projetado para suportar as funcionalidades do CRM. As tabelas principais incluem `cooperados`, `oportunidades`, `produtos`, `tarefas`, e `interacoes`. O schema completo, incluindo tipos customizados e políticas de segurança (RLS), pode ser encontrado no arquivo `supabase_schema.sql`.
+
+### 3.2. Autenticação
+
+A aplicação utiliza o Supabase Auth. Para o ambiente de desenvolvimento atual, um usuário de teste é criado e logado programaticamente. A lógica para isso está em `contexts/AuthContext.tsx`.
+
+### 3.3. API de Dados
+
+Toda a comunicação com o banco de dados é feita através da biblioteca `supabase-js`. As funções de API que encapsulam as queries ao Supabase estão centralizadas em `services/api.ts`.
+
+## 4. Próximos Passos: Implementação do Chat com IA
+
+A etapa final para completar a aplicação é habilitar o chat com a IA "Sofia". Isso requer a implantação de uma **Supabase Edge Function** para se comunicar de forma segura com a API do Google Gemini.
+
+Siga os passos abaixo quando tiver acesso a um terminal com a Supabase CLI.
+
+### 4.1. Instale a Supabase CLI
+Se ainda não o fez, instale a CLI globalmente:
+```bash
+npm install -g supabase
 ```
-/
-├── public/
-├── src/
-│   ├── components/
-│   │   ├── cooperados/
-│   │   ├── layout/
-│   │   └── ui/
-│   ├── constants/
-│   ├── data/
-│   ├── pages/
-│   ├── services/
-│   ├── styles/
-│   └── types/
-├── .eslintrc.cjs
-├── .gitignore
-├── index.html
-├── package.json
-├── README.md
-├── tsconfig.json
-└── vite.config.ts
+
+### 4.2. Vincule seu Projeto
+Navegue até a raiz do projeto no seu terminal e execute:
+```bash
+supabase link --project-ref zutvkkxklsyopbbjipmg
+```
+Você precisará fazer login na sua conta Supabase.
+
+### 4.3. Configure os Segredos (Secrets)
+A Edge Function precisa de chaves de API para funcionar. Configure-as como segredos no seu projeto Supabase. **Substitua `SUA_CHAVE_API_GEMINI` pela sua chave real.**
+```bash
+# Chave da API do Google Gemini
+supabase secrets set GEMINI_API_KEY=SUA_CHAVE_API_GEMINI
+
+# URL e Chave Anon do seu projeto Supabase (para a função usar)
+supabase secrets set SUPABASE_URL=https://zutvkkxklsyopbbjipmg.supabase.co
+supabase secrets set SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1dHZra3hrbHN5b3BiYmppcG1nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2ODk5NzMsImV4cCI6MjA3MTI2NTk3M30.PYSDRItC3s8irmA88PbRAXREAdxfQNVVTNV7fwDMYus
 ```
 
-- **`src/components`**: Contém todos os componentes React reutilizáveis.
-  - **`components/cooperados`**: Componentes específicos para a funcionalidade de cooperados (ex: `CooperadoDetail`, `Timeline`).
-  - **`components/layout`**: Componentes estruturais da aplicação, como `Header` e `Sidebar`.
-  - **`components/ui`**: Componentes de UI genéricos e reutilizáveis, como `Button`, `Card`, `Modal`.
-- **`src/constants`**: Arquivos com valores constantes usados em toda a aplicação (ex: chaves de API, configurações).
-- **`src/data`**: Contém os dados mockados (`mockData.ts`) que alimentam a UI no estado atual do projeto.
-- **`src/pages`**: Cada arquivo representa uma página da aplicação (ex: `DashboardPage`, `CooperadosPage`).
-- **`src/services`**: Módulos responsáveis por se comunicar com serviços externos. No futuro, abrigará as chamadas de API.
-- **`src/types`**: Contém as definições de tipos TypeScript (`types.ts`) usadas em todo o projeto, garantindo a consistência dos dados.
-- **`App.tsx`**: O componente raiz da aplicação, onde as rotas são definidas.
-- **`index.tsx`**: O ponto de entrada da aplicação React.
+### 4.4. Implante a Função
+O código da função já está no diretório `supabase/functions/send-gemini-message/`. Para implantá-la, execute:
+```bash
+supabase functions deploy send-gemini-message
+```
 
-## 3. Páginas da Aplicação
+### 4.5. Refatore o Componente de Chat
+Após a implantação da função, o último passo é atualizar o componente `components/ai/ChatPanel.tsx` para chamar esta função em vez do serviço mockado. Isso envolverá:
+1.  Criar uma nova função em `services/api.ts` para invocar a Edge Function.
+2.  Modificar `ChatPanel.tsx` para usar esta nova função.
+3.  Implementar o armazenamento do histórico de chat no banco de dados usando as funções de API já criadas (`getConversations`, `addChatMessage`, etc.).
+4.  Remover o arquivo `services/geminiService.ts`.
 
-A aplicação é composta pelas seguintes páginas, que podem ser encontradas no diretório `src/pages`:
-
-- **`DashboardPage.tsx`**: A página inicial após o login. Apresenta uma visão geral com os principais KPIs (Indicadores Chave de Performance), como total de cooperados, valor em pipeline, taxa de churn e alertas da IA. Também exibe gráficos sobre o pipeline de negócios e a tendência de churn, além de insights e uma lista de cooperados recentes.
-
-- **`CooperadosPage.tsx`**: Exibe uma lista de todos os cooperados. Permite a busca, filtragem e visualização de informações detalhadas de cada cooperado, incluindo seu perfil, histórico de interações e produtos contratados.
-
-- **`OportunidadesPage.tsx`**: Apresenta um pipeline visual (Kanban) das oportunidades de negócio, organizadas por estágio (Prospecção, Qualificação, Proposta, etc.). Permite que o gerente de relacionamento acompanhe e gerencie cada oportunidade de forma eficiente.
-
-- **`ProdutosPage.tsx`**: Lista todos os produtos e serviços oferecidos pela cooperativa. Funciona como um catálogo que pode ser consultado pelo gerente.
-
-- **`TarefasPage.tsx`**: Uma lista de tarefas (to-do list) para o gerente de relacionamento. As tarefas podem ser vinculadas a cooperados ou oportunidades específicas.
-
-- **`ConsultorIAPage.tsx`**: Uma interface de chat onde o gerente pode interagir com um "Consultor de IA". O objetivo é que a IA forneça insights, sugestões e responda a perguntas com base nos dados dos cooperados (funcionalidade futura).
-
-- **`RelatoriosPage.tsx`**: Área dedicada à geração de relatórios customizáveis sobre vendas, desempenho, metas, etc (página em desenvolvimento).
-
-## 4. Componentes Principais
-
-A aplicação é construída sobre um sistema de componentes reutilizáveis para garantir consistência visual e agilidade no desenvolvimento.
-
-### Componentes de Layout (`src/components/layout`)
-
-- **`Header.tsx`**: O cabeçalho da aplicação. Contém o botão para abrir/fechar a `Sidebar` em telas menores, uma barra de busca global e o perfil do usuário logado.
-- **`Sidebar.tsx`**: A barra de navegação lateral. Apresenta os links para todas as páginas principais da aplicação.
-
-### Componentes de UI (`src/components/ui`)
-
-Estes são componentes genéricos que formam a base da interface.
-
-- **`Card.tsx`**: Um container flexível usado para agrupar conteúdo relacionado, como os KPIs no Dashboard ou informações de um cooperado.
-- **`Button.tsx`**: Componente de botão com variantes de estilo (primário, secundário, destrutivo, etc.).
-- **`Modal.tsx`**: Componente para exibir conteúdo em uma camada sobre a página, ideal para formulários de edição ou confirmações.
-- **`Badge.tsx`**: Usado para destacar informações, como o `tier` de um cooperado (Ouro, Prata, Bronze) ou o status de uma oportunidade.
-
-## 5. Estruturas de Dados e Mock Data
-
-A consistência dos dados em toda a aplicação é garantida pelo uso de tipos definidos no arquivo `src/types.ts`.
-
-### Principais Tipos
-
-- **`Cooperado`**: Representa o perfil de um membro da cooperativa. Inclui informações como nome, `tier` (nível), valor investido, dados da empresa, e um `timeline` de interações.
-- **`Oportunidade`**: Descreve uma oportunidade de negócio, contendo título, valor, cooperado associado e o estágio atual no pipeline de vendas.
-- **`Produto`**: Define um produto ou serviço oferecido, com nome, categoria e descrição.
-- **`Tarefa`**: Representa uma tarefa a ser realizada pelo gerente, com título, data de vencimento, prioridade e status.
-- **`Interaction`**: Modela um ponto de contato com o cooperado (reunião, e-mail, ligação, etc.), formando o histórico do `timeline`.
-
-### Mock Data
-
-Como mencionado, a aplicação atualmente opera com dados estáticos para simular o ambiente de produção. O arquivo `src/data/mockData.ts` é responsável por exportar arrays de objetos que seguem os tipos definidos acima, permitindo o desenvolvimento e teste da UI de forma isolada.
+Com esses passos, a aplicação estará 100% funcional.

@@ -1,33 +1,36 @@
-
-import React, { useState, useMemo } from 'react';
-import { Oportunidade, OpportunityStage, Cooperado } from '../types';
-import { mockOportunidades, mockCooperados } from '../data/mockData';
-import { MoreHorizontal, Plus, Search, DollarSign, Calendar, Edit, Trash2, Lamp, Menu } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import {
+    getOportunidades, addOportunidade, updateOportunidade, deleteOportunidade, getCooperados,
+    OportunidadeWithCooperado, EstagioOportunidade, Cooperado
+} from '../services/api';
+import { MoreHorizontal, Plus, Search, DollarSign, Calendar, Edit, Trash2, Lamp } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 
-const stageConfig: { [key in OpportunityStage]: { border: string; bg: string; text: string; } } = {
-    [OpportunityStage.Prospecting]: { border: 'border-neutral-400', bg: 'bg-neutral-100', text: 'text-neutral-800' },
-    [OpportunityStage.Qualification]: { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-800' },
-    [OpportunityStage.Diagnosis]: { border: 'border-purple-500', bg: 'bg-purple-50', text: 'text-purple-800' },
-    [OpportunityStage.Proposal]: { border: 'border-yellow-500', bg: 'bg-yellow-50', text: 'text-yellow-800' },
-    [OpportunityStage.Negotiation]: { border: 'border-orange-500', bg: 'bg-orange-50', text: 'text-orange-800' },
-    [OpportunityStage.Won]: { border: 'border-green-500', bg: 'bg-green-50', text: 'text-green-800' },
-    [OpportunityStage.Lost]: { border: 'border-red-500', bg: 'bg-red-50', text: 'text-red-800' },
+const stageConfig: { [key in EstagioOportunidade]: { border: string; bg: string; text: string; } } = {
+    'Prospecção': { border: 'border-neutral-400', bg: 'bg-neutral-100', text: 'text-neutral-800' },
+    'Qualificação': { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-800' },
+    'Diagnóstico': { border: 'border-purple-500', bg: 'bg-purple-50', text: 'text-purple-800' },
+    'Proposta': { border: 'border-yellow-500', bg: 'bg-yellow-50', text: 'text-yellow-800' },
+    'Negociação': { border: 'border-orange-500', bg: 'bg-orange-50', text: 'text-orange-800' },
+    'Ganho': { border: 'border-green-500', bg: 'bg-green-50', text: 'text-green-800' },
+    'Perdido': { border: 'border-red-500', bg: 'bg-red-50', text: 'text-red-800' },
 };
 
-// --- Sub-components defined inside the page file ---
+type OportunidadeFormData = Omit<OportunidadeWithCooperado, 'id' | 'created_at' | 'user_id' | 'cooperados'>;
 
 const OportunidadeForm: React.FC<{
-  oportunidade?: Oportunidade | null;
+  oportunidade?: OportunidadeWithCooperado | null;
+  cooperados: Cooperado[];
   onClose: () => void;
-  onSave: (data: Omit<Oportunidade, 'id'> & { id?: string }) => void;
-}> = ({ oportunidade, onClose, onSave }) => {
+  onSave: (data: Partial<OportunidadeFormData>, id?: number) => void;
+}> = ({ oportunidade, cooperados, onClose, onSave }) => {
     const [formData, setFormData] = useState({
         title: oportunidade?.title || '',
-        cooperadoId: oportunidade?.cooperadoId || 0,
-        stage: oportunidade?.stage || OpportunityStage.Prospecting,
+        cooperado_id: oportunidade?.cooperado_id || 0,
+        stage: oportunidade?.stage || 'Prospecção',
         value: oportunidade?.value || 0,
         expected_close_date: oportunidade?.expected_close_date || new Date().toISOString().split('T')[0],
         description: oportunidade?.description || '',
@@ -35,47 +38,41 @@ const OportunidadeForm: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const cooperado = mockCooperados.find(c => c.id === Number(formData.cooperadoId));
-        const dataToSave = {
-            ...formData,
-            cooperadoName: cooperado?.name || 'Não encontrado',
-            value: Number(formData.value),
-        };
-        onSave(oportunidade ? { ...dataToSave, id: oportunidade.id } : dataToSave);
+        onSave(formData, oportunidade?.id);
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
                 <label className="block text-sm font-medium text-neutral-700">Título</label>
-                <input type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} required className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2" />
+                <input type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} required className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm p-2" />
             </div>
             <div>
                 <label className="block text-sm font-medium text-neutral-700">Cooperado Associado</label>
-                <select value={formData.cooperadoId} onChange={e => setFormData({ ...formData, cooperadoId: Number(e.target.value)})} required className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 bg-white text-neutral-900">
+                <select value={formData.cooperado_id} onChange={e => setFormData({ ...formData, cooperado_id: Number(e.target.value)})} required className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm p-2 bg-white">
                     <option value={0} disabled>Selecione um cooperado</option>
-                    {mockCooperados.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {cooperados.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-neutral-700">Valor Estimado</label>
-                    <input type="number" value={formData.value} onChange={e => setFormData({ ...formData, value: Number(e.target.value) })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2" />
+                    <input type="number" value={formData.value ?? 0} onChange={e => setFormData({ ...formData, value: Number(e.target.value) })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm p-2" />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-neutral-700">Data Prevista de Fechamento</label>
-                    <input type="date" value={formData.expected_close_date} onChange={e => setFormData({ ...formData, expected_close_date: e.target.value })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2" />
+                    <input type="date" value={formData.expected_close_date ?? ''} onChange={e => setFormData({ ...formData, expected_close_date: e.target.value })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm p-2" />
                 </div>
             </div>
              <div>
                 <label className="block text-sm font-medium text-neutral-700">Estágio</label>
-                <select value={formData.stage} onChange={e => setFormData({ ...formData, stage: e.target.value as OpportunityStage })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 bg-white text-neutral-900">
-                    {Object.values(OpportunityStage).map(s => <option key={s} value={s}>{s}</option>)}
+                <select value={formData.stage} onChange={e => setFormData({ ...formData, stage: e.target.value as EstagioOportunidade })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm p-2 bg-white">
+                    {Object.values(EstagioOportunidade).map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
             </div>
             <div>
                 <label className="block text-sm font-medium text-neutral-700">Descrição</label>
-                <textarea rows={3} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2"></textarea>
+                <textarea rows={3} value={formData.description ?? ''} onChange={e => setFormData({ ...formData, description: e.target.value })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm p-2"></textarea>
             </div>
             <div className="flex justify-end gap-2 pt-4 border-t">
                 <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
@@ -86,8 +83,8 @@ const OportunidadeForm: React.FC<{
 };
 
 
-const KanbanCard: React.FC<{ oportunidade: Oportunidade; onEdit: (op: Oportunidade) => void; onDelete: (id: string) => void; }> = ({ oportunidade, onEdit, onDelete }) => {
-    const cooperado = mockCooperados.find(c => c.id === oportunidade.cooperadoId);
+const KanbanCard: React.FC<{ oportunidade: OportunidadeWithCooperado; onEdit: (op: OportunidadeWithCooperado) => void; onDelete: (id: number) => void; }> = ({ oportunidade, onEdit, onDelete }) => {
+    const cooperado = oportunidade.cooperados;
     return (
         <div className={`bg-white p-3 rounded-lg shadow-sm mb-3 border-l-4 ${stageConfig[oportunidade.stage].border} cursor-grab active:cursor-grabbing`}>
             <div className="flex justify-between items-start">
@@ -99,27 +96,20 @@ const KanbanCard: React.FC<{ oportunidade: Oportunidade; onEdit: (op: Oportunida
             </div>
             {cooperado && (
                  <div className="flex items-center gap-2 mt-2">
-                    <img src={cooperado.avatar} alt={cooperado.name} className="h-6 w-6 rounded-full"/>
-                    <p className="text-sm font-medium text-neutral-600">{oportunidade.cooperadoName}</p>
+                    <img src={cooperado.avatar_url ?? ''} alt={cooperado.name} className="h-6 w-6 rounded-full"/>
+                    <p className="text-sm font-medium text-neutral-600">{cooperado.name}</p>
                 </div>
             )}
             <div className="flex justify-between items-center mt-3 text-sm text-neutral-500">
-                <span className="font-semibold text-secondary flex items-center gap-1"><DollarSign size={14}/> {oportunidade.value.toLocaleString('pt-BR')}</span>
-                <span className="flex items-center gap-1"><Calendar size={14}/> {new Date(oportunidade.expected_close_date).toLocaleDateString('pt-BR')}</span>
+                <span className="font-semibold text-secondary flex items-center gap-1"><DollarSign size={14}/> {(oportunidade.value ?? 0).toLocaleString('pt-BR')}</span>
+                <span className="flex items-center gap-1"><Calendar size={14}/> {new Date(oportunidade.expected_close_date!).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
             </div>
-             {oportunidade.stage !== OpportunityStage.Won && oportunidade.stage !== OpportunityStage.Lost && (
-                <div className="mt-3">
-                    <span className="text-xs font-semibold bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full flex items-center gap-1 w-fit">
-                        <Lamp size={14} /> Sugestão da IA: Risco de Estagnação
-                    </span>
-                </div>
-            )}
         </div>
     );
 };
 
-const KanbanColumn: React.FC<{ stage: OpportunityStage; oportunidades: Oportunidade[]; onEdit: (op: Oportunidade) => void; onDelete: (id: string) => void; }> = ({ stage, oportunidades, onEdit, onDelete }) => {
-    const totalValue = oportunidades.reduce((sum, op) => sum + op.value, 0);
+const KanbanColumn: React.FC<{ stage: EstagioOportunidade; oportunidades: OportunidadeWithCooperado[]; onEdit: (op: OportunidadeWithCooperado) => void; onDelete: (id: number) => void; }> = ({ stage, oportunidades, onEdit, onDelete }) => {
+    const totalValue = oportunidades.reduce((sum, op) => sum + (op.value ?? 0), 0);
     const config = stageConfig[stage];
 
     return (
@@ -137,16 +127,39 @@ const KanbanColumn: React.FC<{ stage: OpportunityStage; oportunidades: Oportunid
     );
 };
 
-
-// --- Main Page Component ---
-
 const OportunidadesPage: React.FC = () => {
-    const [oportunidades, setOportunidades] = useState<Oportunidade[]>(mockOportunidades);
+    const { user } = useAuth();
+    const [oportunidades, setOportunidades] = useState<OportunidadeWithCooperado[]>([]);
+    const [cooperados, setCooperados] = useState<Cooperado[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string|null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingOportunidade, setEditingOportunidade] = useState<Oportunidade | null>(null);
+    const [editingOportunidade, setEditingOportunidade] = useState<OportunidadeWithCooperado | null>(null);
 
-    const handleOpenModal = (oportunidade: Oportunidade | null = null) => {
+    const fetchData = useCallback(async () => {
+        if (!user) return;
+        try {
+            setLoading(true);
+            const [oportunidadesData, cooperadosData] = await Promise.all([
+                getOportunidades(user.id),
+                getCooperados(user.id)
+            ]);
+            setOportunidades(oportunidadesData);
+            setCooperados(cooperadosData);
+            setError(null);
+        } catch (err) {
+            setError('Falha ao carregar dados.');
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    const handleOpenModal = (oportunidade: OportunidadeWithCooperado | null = null) => {
         setEditingOportunidade(oportunidade);
         setIsModalOpen(true);
     };
@@ -156,33 +169,39 @@ const OportunidadesPage: React.FC = () => {
         setEditingOportunidade(null);
     };
 
-    const handleSaveOportunidade = (data: Omit<Oportunidade, 'id'> & { id?: string }) => {
-        if (data.id) { // Editing existing
-            setOportunidades(prev => prev.map(op => op.id === data.id ? { ...op, ...data } as Oportunidade : op));
-        } else { // Adding new
-            const newOportunidade: Oportunidade = {
-                ...data,
-                id: `op-${Date.now()}`,
-            } as Oportunidade;
-            setOportunidades(prev => [...prev, newOportunidade]);
+    const handleSaveOportunidade = async (data: Partial<OportunidadeFormData>, id?: number) => {
+        try {
+            if (id) {
+                await updateOportunidade(id, data);
+            } else {
+                await addOportunidade(data as any);
+            }
+            await fetchData();
+            handleCloseModal();
+        } catch (err) {
+            alert('Falha ao salvar oportunidade.');
         }
-        handleCloseModal();
     };
     
-    const handleDeleteOportunidade = (id: string) => {
+    const handleDeleteOportunidade = async (id: number) => {
         if (window.confirm('Tem certeza que deseja excluir esta oportunidade?')) {
-            setOportunidades(prev => prev.filter(op => op.id !== id));
+            try {
+                await deleteOportunidade(id);
+                await fetchData();
+            } catch (err) {
+                alert('Falha ao excluir oportunidade.');
+            }
         }
     };
     
     const filteredOportunidades = useMemo(() => {
         return oportunidades.filter(op => 
             op.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            op.cooperadoName.toLowerCase().includes(searchQuery.toLowerCase())
+            op.cooperados?.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [oportunidades, searchQuery]);
 
-    const stages = Object.values(OpportunityStage);
+    const stages = Object.values(EstagioOportunidade);
 
     return (
         <div className="space-y-6 h-full flex flex-col">
@@ -194,13 +213,7 @@ const OportunidadesPage: React.FC = () => {
                 <div className="flex gap-2 mt-4 md:mt-0">
                     <div className="relative flex-grow md:flex-grow-0">
                          <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                         <input 
-                            type="text"
-                            placeholder="Buscar oportunidades..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white rounded-lg pl-10 pr-4 py-2 border focus:outline-none focus:ring-2 focus:ring-primary"
-                         />
+                         <input type="text" placeholder="Buscar oportunidades..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white rounded-lg pl-10 pr-4 py-2 border focus:outline-none focus:ring-2 focus:ring-primary" />
                     </div>
                     <Button onClick={() => handleOpenModal()}>
                         <Plus size={20} className="mr-2" />
@@ -209,27 +222,32 @@ const OportunidadesPage: React.FC = () => {
                 </div>
             </div>
              <p className="text-sm text-yellow-700 bg-yellow-100 p-2 rounded-md">
-                Nota: A funcionalidade de arrastar e soltar (drag & drop) é uma simulação visual. Uma implementação completa requer bibliotecas como `dnd-kit`.
+                Nota: A funcionalidade de arrastar e soltar (drag & drop) é uma simulação visual.
             </p>
 
-            <div className="flex-1 flex gap-4 overflow-x-auto pb-4">
-                {stages.map(stage => {
-                    const oportunidadesDaEtapa = filteredOportunidades.filter(op => op.stage === stage);
-                    return (
-                        <KanbanColumn 
-                            key={stage} 
-                            stage={stage} 
-                            oportunidades={oportunidadesDaEtapa}
-                            onEdit={handleOpenModal}
-                            onDelete={handleDeleteOportunidade}
-                        />
-                    );
-                })}
-            </div>
+            {loading && <p>Carregando pipeline...</p>}
+            {error && <p className="text-red-500">{error}</p>}
+            {!loading && !error && (
+                <div className="flex-1 flex gap-4 overflow-x-auto pb-4">
+                    {stages.map(stage => {
+                        const oportunidadesDaEtapa = filteredOportunidades.filter(op => op.stage === stage);
+                        return (
+                            <KanbanColumn
+                                key={stage}
+                                stage={stage}
+                                oportunidades={oportunidadesDaEtapa}
+                                onEdit={handleOpenModal}
+                                onDelete={handleDeleteOportunidade}
+                            />
+                        );
+                    })}
+                </div>
+            )}
             
              <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={editingOportunidade ? 'Editar Oportunidade' : 'Criar Nova Oportunidade'}>
                 <OportunidadeForm 
                     oportunidade={editingOportunidade}
+                    cooperados={cooperados}
                     onClose={handleCloseModal}
                     onSave={handleSaveOportunidade}
                 />
