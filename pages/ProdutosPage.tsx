@@ -1,11 +1,9 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import { mockProdutos } from '../data/mockData';
-import { Produto } from '../types';
-import { Plus, Search, Edit, Trash2, Lamp, Tag, DollarSign, Power } from 'lucide-react';
+import { getProducts, addProduct, updateProduct, deleteProduct, Produto } from '../services/api';
+import { Plus, Search, Edit, Trash2, Power } from 'lucide-react';
 
 const categoryColors: { [key: string]: string } = {
     'Crédito': 'bg-blue-100 text-blue-800',
@@ -15,12 +13,14 @@ const categoryColors: { [key: string]: string } = {
     'Serviços': 'bg-pink-100 text-pink-800',
 };
 
+type ProdutoFormData = Omit<Produto, 'id' | 'created_at' | 'user_id'>;
+
 const ProdutoForm: React.FC<{
     produto?: Produto | null;
     onClose: () => void;
-    onSave: (data: Omit<Produto, 'id'> & { id?: string }) => void;
+    onSave: (data: ProdutoFormData, id?: number) => void;
 }> = ({ produto, onClose, onSave }) => {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<ProdutoFormData>({
         name: produto?.name || '',
         category: produto?.category || 'Serviços',
         price: produto?.price || 0,
@@ -30,7 +30,7 @@ const ProdutoForm: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(produto ? { ...formData, id: produto.id } : formData);
+        onSave(formData, produto?.id);
     };
 
     return (
@@ -42,18 +42,18 @@ const ProdutoForm: React.FC<{
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-neutral-700">Categoria</label>
-                    <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 bg-white text-neutral-900">
+                    <select value={formData.category ?? ''} onChange={e => setFormData({ ...formData, category: e.target.value })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 bg-white text-neutral-900">
                         {Object.keys(categoryColors).map(cat => <option key={cat} value={cat}>{cat}</option>)}
                     </select>
                 </div>
                  <div>
                     <label className="block text-sm font-medium text-neutral-700">Preço Base/Taxa</label>
-                    <input type="number" step="0.01" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2" />
+                    <input type="number" step="0.01" value={formData.price ?? 0} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2" />
                 </div>
             </div>
             <div>
                 <label className="block text-sm font-medium text-neutral-700">Descrição</label>
-                <textarea rows={3} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2"></textarea>
+                <textarea rows={3} value={formData.description ?? ''} onChange={e => setFormData({ ...formData, description: e.target.value })} className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2"></textarea>
             </div>
             <div className="flex items-center">
                 <input type="checkbox" id="active" checked={formData.active} onChange={e => setFormData({ ...formData, active: e.target.checked })} className="h-4 w-4 rounded border-neutral-300 text-primary focus:ring-primary" />
@@ -68,7 +68,7 @@ const ProdutoForm: React.FC<{
 };
 
 
-const ProdutoCard: React.FC<{ produto: Produto; onEdit: (p: Produto) => void; onDelete: (id: string) => void; }> = ({ produto, onEdit, onDelete }) => (
+const ProdutoCard: React.FC<{ produto: Produto; onEdit: (p: Produto) => void; onDelete: (id: number) => void; }> = ({ produto, onEdit, onDelete }) => (
     <Card className="flex flex-col group">
         <div className="flex justify-between items-start">
             <h3 className="text-xl font-bold text-neutral-800 pr-2">{produto.name}</h3>
@@ -81,14 +81,14 @@ const ProdutoCard: React.FC<{ produto: Produto; onEdit: (p: Produto) => void; on
         <div className="flex justify-between items-center mt-4 pt-4 border-t">
             <div className="flex flex-col">
                 <span className="text-xs text-neutral-500">Categoria</span>
-                <span className={`text-sm font-semibold px-2 py-1 rounded-full ${categoryColors[produto.category] || 'bg-gray-100 text-gray-800'}`}>
+                <span className={`text-sm font-semibold px-2 py-1 rounded-full ${categoryColors[produto.category ?? ''] || 'bg-gray-100 text-gray-800'}`}>
                     {produto.category}
                 </span>
             </div>
             <div className="flex flex-col items-end">
                  <span className="text-xs text-neutral-500">Preço/Taxa</span>
                 <span className="text-sm font-bold text-neutral-800">
-                    {produto.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {(produto.price ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </span>
             </div>
             <div className="flex flex-col items-end">
@@ -102,12 +102,32 @@ const ProdutoCard: React.FC<{ produto: Produto; onEdit: (p: Produto) => void; on
 );
 
 const ProdutosPage: React.FC = () => {
-    const [produtos, setProdutos] = useState<Produto[]>(mockProdutos);
+    const [produtos, setProdutos] = useState<Produto[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('Todos');
     const [statusFilter, setStatusFilter] = useState('Todos');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduto, setEditingProduto] = useState<Produto | null>(null);
+
+    const fetchProdutos = useCallback(async () => {
+        try {
+            setLoading(true);
+            const data = await getProducts();
+            setProdutos(data);
+            setError(null);
+        } catch (err) {
+            setError('Falha ao carregar os produtos.');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchProdutos();
+    }, [fetchProdutos]);
 
     const handleOpenModal = (produto: Produto | null = null) => {
         setEditingProduto(produto);
@@ -119,27 +139,38 @@ const ProdutosPage: React.FC = () => {
         setEditingProduto(null);
     };
 
-    const handleSaveProduto = (data: Omit<Produto, 'id'> & { id?: string }) => {
-        if(data.id) {
-            setProdutos(prev => prev.map(p => p.id === data.id ? { ...p, ...data } as Produto : p));
-        } else {
-            const newProduto: Produto = { ...data, id: `prod-${Date.now()}` } as Produto;
-            setProdutos(prev => [...prev, newProduto]);
+    const handleSaveProduto = async (formData: ProdutoFormData, id?: number) => {
+        try {
+            if (id) {
+                await updateProduct(id, formData);
+            } else {
+                await addProduct(formData);
+            }
+            await fetchProdutos(); // Refresh list
+            handleCloseModal();
+        } catch (err) {
+            console.error("Failed to save product", err);
+            alert("Falha ao salvar o produto. Tente novamente.");
         }
-        handleCloseModal();
     };
 
-    const handleDeleteProduto = (id: string) => {
-        if(window.confirm('Tem certeza que deseja excluir este produto?')) {
-            setProdutos(prev => prev.filter(p => p.id !== id));
+    const handleDeleteProduto = async (id: number) => {
+        if (window.confirm('Tem certeza que deseja excluir este produto?')) {
+            try {
+                await deleteProduct(id);
+                await fetchProdutos(); // Refresh list
+            } catch (err) {
+                console.error("Failed to delete product", err);
+                alert("Falha ao excluir o produto. Tente novamente.");
+            }
         }
     };
     
-    const categories = ['Todos', ...Array.from(new Set(mockProdutos.map(p => p.category)))];
+    const categories = useMemo(() => ['Todos', ...Array.from(new Set(produtos.map(p => p.category).filter(Boolean)))], [produtos]);
 
     const filteredProdutos = useMemo(() => {
         return produtos.filter(p => {
-            const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.description.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
             const matchesCategory = categoryFilter === 'Todos' || p.category === categoryFilter;
             const matchesStatus = statusFilter === 'Todos' || (statusFilter === 'Ativos' && p.active) || (statusFilter === 'Inativos' && !p.active);
             return matchesSearch && matchesCategory && matchesStatus;
@@ -185,11 +216,19 @@ const ProdutosPage: React.FC = () => {
                 </div>
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredProdutos.map(produto => (
-                    <ProdutoCard key={produto.id} produto={produto} onEdit={handleOpenModal} onDelete={handleDeleteProduto} />
-                ))}
-            </div>
+            {loading && <p>Carregando produtos...</p>}
+            {error && <p className="text-red-500">{error}</p>}
+            {!loading && !error && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredProdutos.length > 0 ? (
+                        filteredProdutos.map(produto => (
+                            <ProdutoCard key={produto.id} produto={produto} onEdit={handleOpenModal} onDelete={handleDeleteProduto} />
+                        ))
+                    ) : (
+                        <p className="col-span-full text-center text-neutral-500">Nenhum produto encontrado.</p>
+                    )}
+                </div>
+            )}
 
             <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={editingProduto ? 'Editar Produto' : 'Criar Novo Produto'}>
                 <ProdutoForm 
